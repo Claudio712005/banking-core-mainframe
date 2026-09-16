@@ -1,0 +1,29 @@
+//BKDEFGDG JOB (ACCTINFO),'BANKCORE DEFINE',
+//             CLASS=A,MSGCLASS=X,MSGLEVEL=(1,1),NOTIFY=&SYSUID
+//*********************************************************************
+//* JOB       : BKDEFGDG  (RUN ONCE PER ENVIRONMENT)
+//* PURPOSE   : DEFINES THE GENERATION DATA GROUPS USED BY BKDAILY:
+//*               &APPHLQ..BANKCORE.POSTING.REQUESTS  INPUT ARCHIVE
+//*               &APPHLQ..BANKCORE.POSTING.RESPONSES RESPONSE HISTORY
+//*             RETENTION (LIMIT) IS A PLACEHOLDER: THE REAL VALUE
+//*             COMES FROM THE BANK'S RECORDS RETENTION POLICY.
+//*-------------------------------------------------------------------
+//* PLACEHOLDERS: JOB CARD, APPHLQ, LIMIT.
+//* RERUN: DEFINE FAILS WITH RC 12 IF THE GDG ALREADY EXISTS.
+//*********************************************************************
+//         SET APPHLQ=YOURHLQ
+//*
+//DEFGDG   EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *,SYMBOLS=JCLONLY
+  DEFINE GENERATIONDATAGROUP -
+         (NAME(&APPHLQ..BANKCORE.POSTING.REQUESTS) -
+          LIMIT(30) -
+          NOEMPTY -
+          SCRATCH)
+  DEFINE GENERATIONDATAGROUP -
+         (NAME(&APPHLQ..BANKCORE.POSTING.RESPONSES) -
+          LIMIT(30) -
+          NOEMPTY -
+          SCRATCH)
+/*

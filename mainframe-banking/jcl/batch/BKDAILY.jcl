@@ -1,0 +1,92 @@
+//BKDAILY  JOB (ACCTINFO),'BANKCORE DAILY',
+//             CLASS=A,MSGCLASS=X,MSGLEVEL=(1,1),NOTIFY=&SYSUID
+//*********************************************************************
+//* JOB       : BKDAILY
+//* PURPOSE   : BATCH POSTING CYCLE. PROCESSES A FILE OF DEPOSIT /
+//*             WITHDRAWAL REQUESTS (E.G. PAYROLL CREDITS) THROUGH
+//*             THE SAME ENTRY PROGRAMS USED BY THE ONLINE CHANNEL.
+//* TARGET    : Z/OS WITH DB2 DATA ACCESS MODULES (PHASE 2).
+//* SCHEDULING: SUBMITTED BY THE ENTERPRISE SCHEDULER AFTER THE
+//*             UPSTREAM JOB CATALOGS THE INPUT DATASET. ALERTING ON
+//*             RC >= 12 OR ABEND IS CONFIGURED IN THE SCHEDULER.
+//*-------------------------------------------------------------------
+//* STEPS
+//*   STEP010  IDCAMS    INPUT IS EMPTY?  (RC 0 = HAS DATA, 4 = EMPTY)
+//*   STEP020  BKBATDRV  POST REQUESTS    (ONLY IF STEP010 RC = 0)
+//*   STEP030  IEBGENER  ARCHIVE INPUT    (ONLY IF STEP020 RC <= 4)
+//*   STEP040  IDCAMS    DELETE INPUT     (ONLY IF STEP030 RC = 0)
+//*-------------------------------------------------------------------
+//* RESTART
+//*   STEP020 RC 12/16 OR ABEND: THE INPUT IS KEPT. AFTER ANALYSIS,
+//*   RESUBMIT FROM STEP010. IDEMPOTENCY KEYS GUARANTEE THAT REQUESTS
+//*   ALREADY POSTED ARE ANSWERED WITH 0001 AND NOT POSTED TWICE.
+//*   THE RESPONSE GENERATION OF THE FAILED RUN IS KEPT FOR AUDIT.
+//*-------------------------------------------------------------------
+//* PLACEHOLDERS: SEE BKRUN. GDGS ARE DEFINED BY BKDEFGDG.
+//*********************************************************************
+//         SET APPHLQ=YOURHLQ
+//         SET DB2SSID=DB2X
+//         SET DB2PLAN=BKCOREPL
+//         SET DB2LOAD=DB2.CHANGEME.SDSNLOAD
+//*
+//*--------------------------------------------------------------------
+//* STEP010 - PRINT THE FIRST RECORD ONLY. IDCAMS ENDS WITH RC 4
+//*           WHEN THE DATASET IS EMPTY. NO DATA IS PRINTED IN FULL.
+//*--------------------------------------------------------------------
+//STEP010  EXEC PGM=IDCAMS
+//SYSPRINT DD DUMMY
+//REQIN    DD DISP=SHR,DSN=&APPHLQ..BANKCORE.POSTING.INPUT
+//SYSIN    DD *
+  PRINT INFILE(REQIN) COUNT(1) CHARACTER
+/*
+//*
+//IFDATA   IF (STEP010.RC = 0) THEN
+//*--------------------------------------------------------------------
+//* STEP020 - POST THE REQUESTS. RESPONSES GO TO A NEW GENERATION.
+//*           THE GENERATION IS CATALOGED EVEN ON ABEND (AUDIT TRAIL).
+//*--------------------------------------------------------------------
+//STEP020  EXEC PGM=IKJEFT01,DYNAMNBR=20
+//STEPLIB  DD DISP=SHR,DSN=&APPHLQ..BANKCORE.LOADLIB
+//         DD DISP=SHR,DSN=&DB2LOAD
+//REQIN    DD DISP=SHR,DSN=&APPHLQ..BANKCORE.POSTING.INPUT
+//RSPOUT   DD DSN=&APPHLQ..BANKCORE.POSTING.RESPONSES(+1),
+//            DISP=(NEW,CATLG,CATLG),UNIT=SYSALLDA,
+//            SPACE=(CYL,(5,5),RLSE),
+//            DCB=(RECFM=FB,LRECL=300,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
+//CEEDUMP  DD SYSOUT=*
+//SYSUDUMP DD SYSOUT=*
+//SYSTSPRT DD SYSOUT=*
+//SYSTSIN  DD *,SYMBOLS=JCLONLY
+  DSN SYSTEM(&DB2SSID)
+  RUN PROGRAM(BKBATDRV) PLAN(&DB2PLAN)
+  END
+/*
+//*
+//IFPOSTED IF (STEP020.RC <= 4 AND NOT STEP020.ABEND) THEN
+//*--------------------------------------------------------------------
+//* STEP030 - ARCHIVE THE PROCESSED INPUT TO A NEW GENERATION.
+//*--------------------------------------------------------------------
+//STEP030  EXEC PGM=IEBGENER
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD DUMMY
+//SYSUT1   DD DISP=SHR,DSN=&APPHLQ..BANKCORE.POSTING.INPUT
+//SYSUT2   DD DSN=&APPHLQ..BANKCORE.POSTING.REQUESTS(+1),
+//            DISP=(NEW,CATLG,DELETE),UNIT=SYSALLDA,
+//            SPACE=(CYL,(5,5),RLSE),
+//            DCB=(RECFM=FB,LRECL=200,BLKSIZE=0)
+//*
+//IFARCH   IF (STEP030.RC = 0) THEN
+//*--------------------------------------------------------------------
+//* STEP040 - REMOVE THE INPUT SO IT CANNOT BE PROCESSED AGAIN BY
+//*           MISTAKE (IDEMPOTENCY WOULD PROTECT IT, BUT A CLEAN
+//*           HAND-OFF KEEPS OPERATIONS UNAMBIGUOUS).
+//*--------------------------------------------------------------------
+//STEP040  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *,SYMBOLS=JCLONLY
+  DELETE &APPHLQ..BANKCORE.POSTING.INPUT NONVSAM
+/*
+//IFARCHE  ENDIF
+//IFPOSTE  ENDIF
+//IFDATAE  ENDIF
