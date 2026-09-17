@@ -1,3 +1,67 @@
 spring:
   application:
     name: banking-svc
+  threads:
+    virtual:
+      enabled: false
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  jms:
+    cache:
+      session-cache-size: ${MQ_SESSION_CACHE_SIZE:10}
+    template:
+      qos-enabled: true
+      delivery-mode: persistent
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  max-http-request-header-size: 16KB
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+
+ibm:
+  mq:
+    queue-manager: ${MQ_QUEUE_MANAGER:QM1}
+    channel: ${MQ_CHANNEL:DEV.APP.SVRCONN}
+    conn-name: ${MQ_HOST:localhost}(${MQ_PORT:1414})
+    user: ${MQ_USERNAME:app}
+    password: ${MQ_PASSWORD:}
+    application-name: ${spring.application.name}
+
+banking:
+  mq:
+    queues:
+      deposit-request: ${MQ_DEPOSIT_REQUEST_QUEUE:BANKCORE.ACCTDEP.REQUEST}
+      reply: ${MQ_REPLY_QUEUE:BANKCORE.REPLY.BANKSVC}
+    reply-timeout: ${MQ_REPLY_TIMEOUT:10s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,jms
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:true}
+
+logging:
+  pattern:
+    level: "%5p [%X{correlationId:-}]"
