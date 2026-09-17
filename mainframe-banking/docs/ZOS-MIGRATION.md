@@ -7,7 +7,7 @@ Este documento separa o que é **implementação de laboratório** do que seria 
 
 | Componente | Laboratório (hoje) | z/OS (alvo) | Muda o contrato? |
 |---|---|---|:-:|
-| Transporte online | – (`BKMQADP` existe, mas não roda no lab) | `BKMQADP`, acionado pelo CKTI, uma fila e um TRANSID por operação: `MQGET` sob syncpoint → `CALL` do programa de entrada → `MQPUT1` da resposta → `SYNCPOINT` / `ROLLBACK`. Ver [MQ-INTEGRATION.md](MQ-INTEGRATION.md). | Não (código `9004` acrescentado) |
+| Transporte online | `BKMQLSN`: client MQ, um processo para as 4 filas, `MQCMIT`/`MQBACK` (`BKMQADP` existe, mas não roda no lab) | `BKMQADP`, acionado pelo CKTI, uma fila e um TRANSID por operação: `MQGET` sob syncpoint → `CALL` do programa de entrada → `MQPUT1` da resposta → `SYNCPOINT` / `ROLLBACK`. Ver [MQ-INTEGRATION.md](MQ-INTEGRATION.md). | Não (código `9004` acrescentado) |
 | Transporte batch | `BKBATDRV` com `ORGANIZATION LINE SEQUENTIAL` | `BKBATDRV` com `ORGANIZATION SEQUENTIAL` (RECFM=FB), executado por `BKRUN` / `BKDAILY` | Não |
 | ACCTDAO | Varredura de arquivo + cópia old/new master + rename | `SELECT` / `UPDATE ... WHERE VERSION_NUMBER = :v` | Não |
 | CUSTDAO | Varredura de arquivo | `SELECT` | Não |

@@ -203,13 +203,17 @@ try (JMSConsumer consumer = ctx.createConsumer(replyTo, selector)) {
 
 ## 6. Teste local
 
-O GnuCOBOL não tem suporte oficial para a API do MQ, e o `BKMQADP` não roda fora do CICS.
-Opções para a fase Java, sem simular MQ dentro do COBOL:
+O `BKMQADP` não roda fora do CICS. No laboratório, o mesmo tratamento de mensagens é feito
+pelo [`BKMQLSN`](../programs/adapter/BKMQLSN.cbl): GnuCOBOL 3.2 chamando a API do MQ pela
+biblioteca COBOL do client oficial (`libmqicb`), com `MQCMIT`/`MQBACK` no lugar de
+`SYNCPOINT`. Ver [docs/LOCAL-INTEGRATION.md](../../docs/LOCAL-INTEGRATION.md).
 
-1. **Contrato**: testar a montagem e a leitura de layouts do Java contra
-   `tests/requests/*.req` e `tests/expected/*/RSPOUT.txt`.
-2. **Ponta a ponta sem CICS**: IBM MQ em container (imagem de desenvolvedor da IBM) e uma
-   ponte simples que lê a fila, grava o arquivo `REQIN`, executa `scripts/run.sh` e publica
-   o `RSPOUT` com o `CorrelId` correto. Valida o fluxo e os layouts. **Não** valida a unidade
-   de trabalho única nem a conversão EBCDIC.
-3. **Integrado**: ambiente z/OS de desenvolvimento com CICS, DB2 e MQ.
+Diferenças em relação ao alvo z/OS:
+
+- Filas com nomes `BANKCORE.*` e **um único processo** atendendo as quatro, em sequência
+  (os DAOs de arquivo aceitam um só gravador). Não há trigger nem TRANSID por operação.
+- Arquivos não participam da transação do MQ; a idempotência cobre a reentrega.
+- Sem conversão EBCDIC (cliente e servidor em ASCII) e sem TLS.
+
+O que continua exigindo um z/OS de desenvolvimento: `BKMQADP` em CICS, DB2 com `SYNCPOINT`
+coordenado e conversão de code page real.

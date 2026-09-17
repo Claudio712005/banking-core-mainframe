@@ -4,7 +4,8 @@
 
 ```text
  TRANSPORTE          BKBATDRV            batch: arquivo sequencial (roda no lab)
- (substituível)      BKMQADP             online: CICS acionado por MQ (alvo z/OS)
+ (substituível)      BKMQLSN             online: listener MQ local (GnuCOBOL + client IBM MQ)
+                     BKMQADP             online: CICS acionado por MQ (alvo z/OS)
         │  CALL por whitelist, USING REQUEST RESPONSE
         ▼
  ENTRADA             ACCTINQ  ACCTDEP  ACCTWDR  TRXINQ
@@ -21,7 +22,7 @@
 
 | Camada | Programas | Conhece | Não conhece |
 |---|---|---|---|
-| Transporte | BKBATDRV, BKMQADP | origem/destino das mensagens, RC do job, envelope MQ, unidade de trabalho | regras de negócio, persistência |
+| Transporte | BKBATDRV, BKMQLSN, BKMQADP | origem/destino das mensagens, RC do job, envelope MQ, unidade de trabalho | regras de negócio, persistência |
 | Entrada | ACCTINQ, ACCTDEP, ACCTWDR, TRXINQ | contrato REQUEST/RESPONSE | arquivos, DB2, MQ |
 | Negócio | ACCTPOST | regras de lançamento, idempotência, unidade de trabalho | onde os dados estão |
 | Serviços comuns | BKVALID, BKRESP | formato dos campos, códigos e mensagens | regras de negócio |
@@ -130,6 +131,7 @@ mainframe-banking/
 │   │                   ACCTDAO CUSTDAO TRXDAO        (dados - LAB)
 │   ├── driver/         BKBATDRV                      (transporte batch)
 │   └── adapter/        BKMQADP                       (transporte MQ/CICS - z/OS)
+│                       BKMQLSN BKMQREQ               (transporte MQ local e ferramenta de teste)
 ├── copybooks/          REQUEST RESPONSE RSPCODE      (contrato)
 │                       ACCOUNT CUSTOMER TRANSACT     (entidades)
 │                       DAOCTL VALCTL RSPCTL PSTCTL   (interfaces internas)
