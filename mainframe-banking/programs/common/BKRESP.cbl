@@ -16,6 +16,16 @@
       *            APPROPRIATE FOR CICS APPLICATION LOGGING.           *
       *================================================================*
        ENVIRONMENT DIVISION.
+       CONFIGURATION SECTION.
+       SPECIAL-NAMES.
+           CLASS BK-LOG-SAFE-CHAR IS 'A' THRU 'I'
+                                     'J' THRU 'R'
+                                     'S' THRU 'Z'
+                                     'a' THRU 'i'
+                                     'j' THRU 'r'
+                                     's' THRU 'z'
+                                     '0' THRU '9'
+                                     '-' ' '.
 
        DATA DIVISION.
        WORKING-STORAGE SECTION.
@@ -24,6 +34,9 @@
            05  WS-UNEXPECTED-ERROR-CODE     PIC X(04) VALUE '9999'.
            05  WS-LOG-EVENT-NAME            PIC X(16)
                                             VALUE 'TECHNICAL EVENT '.
+           05  WS-UNSAFE-VALUE              PIC X(08) VALUE 'INVALID'.
+
+       01  WS-LOG-CORRELATION               PIC X(36).
 
       *----------------------------------------------------------------*
       * STANDARD MESSAGES. ONE ENTRY PER CODE IN COPYBOOK RSPCODE.     *
@@ -184,9 +197,14 @@
            .
 
        9000-WRITE-TECHNICAL-LOG.
+           IF RSP-CORRELATION-ID IS BK-LOG-SAFE-CHAR
+               MOVE RSP-CORRELATION-ID TO WS-LOG-CORRELATION
+           ELSE
+               MOVE WS-UNSAFE-VALUE    TO WS-LOG-CORRELATION
+           END-IF
            DISPLAY LKR-PROGRAM-ID ' '
                    WS-LOG-EVENT-NAME
                    'RC=' WS-RESPONSE-CODE
                    ' TECH=' LKR-TECH-CODE
-                   ' CORR=' RSP-CORRELATION-ID
+                   ' CORR=' WS-LOG-CORRELATION
            .
