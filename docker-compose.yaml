@@ -1,0 +1,83 @@
+name: banking-core-mainframe
+
+services:
+  ibm-mq:
+    image: icr.io/ibm-messaging/mq:10.0.0.5-r1
+    platform: linux/amd64
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: ${MQ_QUEUE_MANAGER:-QM1}
+      MQ_APP_PASSWORD: ${MQ_APP_PASSWORD:-local-dev-app-password}
+      MQ_ADMIN_PASSWORD: ${MQ_ADMIN_PASSWORD:-local-dev-admin-password}
+    ports:
+      - "127.0.0.1:${MQ_PORT:-1414}:1414"
+      - "127.0.0.1:${MQ_CONSOLE_PORT:-9443}:9443"
+    volumes:
+      - ibm-mq-data:/mnt/mqm
+      - ./infrastructure/ibm-mq/20-banking.mqsc:/etc/mqm/20-banking.mqsc:ro
+    healthcheck:
+      test: ["CMD", "chkmqready"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  mainframe-banking:
+    build:
+      context: ./mainframe-banking
+    image: mainframe-banking:local
+    platform: linux/amd64
+    depends_on:
+      ibm-mq:
+        condition: service_healthy
+    environment:
+      MQSERVER: DEV.APP.SVRCONN/TCP/ibm-mq(1414)
+      MQ_QUEUE_MANAGER: ${MQ_QUEUE_MANAGER:-QM1}
+      MQ_USERNAME: app
+      MQ_PASSWORD: ${MQ_APP_PASSWORD:-local-dev-app-password}
+      BK_POLL_WAIT_MS: 250
+    volumes:
+      - core-banking-data:/var/lib/bankcore
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  banking-svc:
+    build:
+      context: ./banking-svc
+    image: banking-svc:local
+    depends_on:
+      ibm-mq:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      MQ_HOST: ibm-mq
+      MQ_PORT: 1414
+      MQ_QUEUE_MANAGER: ${MQ_QUEUE_MANAGER:-QM1}
+      MQ_CHANNEL: DEV.APP.SVRCONN
+      MQ_USERNAME: app
+      MQ_PASSWORD: ${MQ_APP_PASSWORD:-local-dev-app-password}
+      MQ_DEPOSIT_REQUEST_QUEUE: BANKCORE.ACCTDEP.REQUEST
+      MQ_REPLY_QUEUE: BANKCORE.REPLY.BANKSVC
+      MQ_REPLY_TIMEOUT: 10s
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ${LOG_FORMAT:-ecs}
+    ports:
+      - "127.0.0.1:${BANKING_SVC_PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+volumes:
+  ibm-mq-data:
+  core-banking-data:
