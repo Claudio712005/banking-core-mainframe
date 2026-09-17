@@ -48,6 +48,16 @@
       * SEE      : DOCS/MQ-INTEGRATION.MD                              *
       *================================================================*
        ENVIRONMENT DIVISION.
+       CONFIGURATION SECTION.
+       SPECIAL-NAMES.
+           CLASS BK-LOG-SAFE-CHAR IS 'A' THRU 'I'
+                                     'J' THRU 'R'
+                                     'S' THRU 'Z'
+                                     'a' THRU 'i'
+                                     'j' THRU 'r'
+                                     's' THRU 'z'
+                                     '0' THRU '9'
+                                     '-' ' '.
 
        DATA DIVISION.
        WORKING-STORAGE SECTION.
@@ -74,6 +84,7 @@
            05  WS-REASON-LENGTH             PIC X(08) VALUE 'LENGTH'.
            05  WS-REASON-WRONG-OPERATION    PIC X(08) VALUE 'WRONGOP'.
            05  WS-REASON-MODULE-MISSING     PIC X(08) VALUE 'NOMODULE'.
+           05  WS-UNSAFE-VALUE              PIC X(08) VALUE 'INVALID'.
 
        01  WS-LOG-EVENTS.
            05  WS-EVENT-NO-TRIGGER          PIC X(16)
@@ -638,7 +649,11 @@
        8000-WRITE-LOG.
            MOVE WS-THIS-PROGRAM    TO WS-LOG-PROGRAM
            MOVE EIBTRNID           TO WS-LOG-TRANSACTION
-           MOVE REQ-CORRELATION-ID TO WS-LOG-CORRELATION
+           IF REQ-CORRELATION-ID IS BK-LOG-SAFE-CHAR
+               MOVE REQ-CORRELATION-ID TO WS-LOG-CORRELATION
+           ELSE
+               MOVE WS-UNSAFE-VALUE    TO WS-LOG-CORRELATION
+           END-IF
            MOVE LENGTH OF WS-LOG-RECORD TO WS-LOG-LENGTH
            EXEC CICS WRITEQ TD
                QUEUE(WS-LOG-TDQ)
