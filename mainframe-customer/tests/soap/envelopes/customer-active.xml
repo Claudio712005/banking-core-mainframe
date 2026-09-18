@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Body>
+    <GetCustomer xmlns="http://bankcore.example/customer/v1">
+      <customerId>0000000001</customerId>
+    </GetCustomer>
+  </soapenv:Body>
+</soapenv:Envelope>

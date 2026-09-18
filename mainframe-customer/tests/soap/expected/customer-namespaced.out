@@ -1,0 +1,13 @@
+HTTP 200
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body>
+<GetCustomerResponse xmlns="http://bankcore.example/customer/v1">
+  <customerId>0000000002</customerId>
+  <name>JOAO PEREIRA LIMA</name>
+  <status>A</status>
+  <documentMasked>***.***.***-35</documentMasked>
+  <registeredDate>2020-07-02</registeredDate>
+</GetCustomerResponse>
+</soapenv:Body>
+</soapenv:Envelope>
