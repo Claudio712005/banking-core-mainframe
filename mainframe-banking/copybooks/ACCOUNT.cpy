@@ -16,7 +16,11 @@
       * CURRENCY           41    3  ISO 4217 ALPHA CODE                *
       * VERSION-NUMBER     44    9  OPTIMISTIC LOCK COUNTER            *
       * LAST-UPDATE-TS     53   26  YYYY-MM-DD-HH.MM.SS.NNNNNN         *
-      * FILLER             79   22  RESERVED FOR FUTURE USE            *
+      * CUSTOMER-STATUS    79    1  A=ACTIVE B=BLOCKED I=INACTIVE.     *
+      *                             KEPT ON THE ACCOUNT: THE CUSTOMER  *
+      *                             MASTER BELONGS TO MAINFRAME-       *
+      *                             CUSTOMER (SOAP), NOT TO THIS CORE. *
+      * FILLER             80   21  RESERVED FOR FUTURE USE            *
       *================================================================*
            05  :TAG:-ACCOUNT-ID             PIC X(10).
            05  :TAG:-CUSTOMER-ID            PIC X(10).
@@ -37,4 +41,9 @@
            05  :TAG:-CURRENCY               PIC X(03).
            05  :TAG:-VERSION-NUMBER         PIC 9(09).
            05  :TAG:-LAST-UPDATE-TS         PIC X(26).
-           05  FILLER                       PIC X(22).
+           05  :TAG:-CUSTOMER-STATUS        PIC X(01).
+               88  :TAG:-CUSTOMER-ACTIVE             VALUE 'A'.
+               88  :TAG:-CUSTOMER-STATUS-VALID       VALUE 'A'
+                                                           'B'
+                                                           'I'.
+           05  FILLER                       PIC X(21).

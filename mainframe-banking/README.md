@@ -8,7 +8,7 @@ Java/Spring Boot) vai integrar com ele por IBM MQ usando os layouts documentados
 Esta primeira etapa roda **localmente com GnuCOBOL**. A persistência usa arquivos
 sequenciais, atrás de uma camada de acesso a dados que será substituída por DB2.
 CICS, DB2 e MQ **não** são simulados. O que depende deles está documentado em
-[docs/ZOS-MIGRATION.md](docs/ZOS-MIGRATION.md).
+[docs/ZOS-TARGET.md](docs/ZOS-TARGET.md).
 
 | Operação | Programa | Descrição |
 |---|---|---|
@@ -26,27 +26,24 @@ mainframe-banking/
 │   ├── transaction/   TRXINQ.cbl                            programa de entrada
 │   ├── common/        ACCTPOST.cbl                          motor de lançamento
 │   │                  BKVALID.cbl  BKRESP.cbl               validação / resposta
-│   │                  ACCTDAO.cbl  CUSTDAO.cbl TRXDAO.cbl   acesso a dados (LAB)
+│   │                  ACCTDAO.cbl  TRXDAO.cbl               acesso a dados (LAB)
 │   ├── driver/        BKBATDRV.cbl                          driver batch (transporte)
-│   └── adapter/       BKMQADP.cbl                           adaptador MQ/CICS (só z/OS)
-│                      BKMQLSN.cbl                           listener MQ local (GnuCOBOL + client IBM MQ)
+│   └── adapter/       BKMQLSN.cbl                           listener MQ local (GnuCOBOL + client IBM MQ)
 │                      BKMQREQ.cbl                           ferramenta de teste: envia requisições pelo MQ
 ├── copybooks/
 │   ├── REQUEST.cpy  RESPONSE.cpy  RSPCODE.cpy               contrato de integração
-│   ├── ACCOUNT.cpy  CUSTOMER.cpy  TRANSACT.cpy              entidades
+│   ├── ACCOUNT.cpy  TRANSACT.cpy                            entidades
 │   └── DAOCTL.cpy   VALCTL.cpy    RSPCTL.cpy  PSTCTL.cpy    interfaces internas
 ├── jcl/
-│   ├── compile/       BKCBLCL (PROC)  BKCOMPL  BKBUILD
-│   └── batch/         BKDEFGDG  BKRUN  BKDAILY
+│   └── compile/       BKCBLCL (PROC)  BKBUILD               amostra de JCL
 ├── data/
 │   ├── accounts/      ACCTMAST.dat                          massa base
-│   ├── customers/     CUSTMAST.dat
 │   └── transactions/  TRXJRNL.dat
 ├── tests/             requisições, massa corrompida, respostas esperadas
 ├── runtime/           entrypoint.sh                         inicialização do container
 ├── Dockerfile                                               GnuCOBOL 3.2 + client IBM MQ + BKMQLSN
 ├── scripts/           build.sh  run.sh  run-tests.sh  mq-request.sh
-└── docs/              ARCHITECTURE.md  CONTRACT.md  ZOS-MIGRATION.md  MQ-INTEGRATION.md
+└── docs/              ARCHITECTURE.md  CONTRACT.md  ZOS-TARGET.md
 ```
 
 Ajustes em relação à estrutura inicial (detalhes em
@@ -215,20 +212,19 @@ ACCTINQ  TECHNICAL EVENT RC=9002 TECH=BADREC   CORR=c0ffee00-0000-4000-8000-0000
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Camadas, decisões técnicas, fluxo do lançamento, idempotência, concorrência, atomicidade, segurança |
 | [docs/CONTRACT.md](docs/CONTRACT.md) | Layouts campo a campo, tipos, obrigatoriedade, valores, códigos de erro, formatos de data e moeda, encoding |
-| [docs/MQ-INTEGRATION.md](docs/MQ-INTEGRATION.md) | Canal Java → MQ → CICS → COBOL: adaptador `BKMQADP`, uma fila por operação, destino de cada mensagem, MQSC/CSD/RACF, requisitos do cliente JMS |
 | [../docs/LOCAL-INTEGRATION.md](../docs/LOCAL-INTEGRATION.md) | Como o COBOL roda localmente consumindo o IBM MQ (`BKMQLSN`) |
-| [docs/ZOS-MIGRATION.md](docs/ZOS-MIGRATION.md) | Laboratório × z/OS, mudanças para CICS/DB2/MQ, DDL proposta, limitações do GnuCOBOL |
+| [docs/ZOS-TARGET.md](docs/ZOS-TARGET.md) | Diferenças para z/OS: CICS, DB2 (DDL proposta), IBM MQ e limitações do laboratório |
 | [tests/README.md](tests/README.md) | Massa de dados e catálogo de cenários |
 
 ## Laboratório × z/OS, em resumo
 
 | | Laboratório | z/OS |
 |---|---|---|
-| Dados | Arquivos *line sequential* (`ACCTDAO`/`CUSTDAO`/`TRXDAO`) | DB2 (mesma interface `DAOCTL`) |
+| Dados | Arquivos *line sequential* (`ACCTDAO`/`TRXDAO`) | DB2 (mesma interface `DAOCTL`) |
 | Atomicidade | Compensação best effort (`9003` se falhar) | Unidade de trabalho CICS/DB2 (`SYNCPOINT`) |
 | Concorrência | Versão otimista, **sem locks**: rodar em série | Versão otimista + locks do DB2 |
 | Idempotência | Varredura do journal | Índice único em `IDEMPOTENCY_KEY` |
-| Transporte | `BKBATDRV` + arquivo e `BKMQLSN` + IBM MQ (client, container amd64) | `BKMQADP`: MQ → CICS (online, código pronto, não compilado aqui) e JCL `BKDAILY` (batch) |
+| Transporte | `BKBATDRV` + arquivo e `BKMQLSN` + IBM MQ (client, container amd64) | Programa CICS acionado por MQ e JCL de batch |
 | Log técnico | `DISPLAY` | TD queue / serviço de log |
 | Segurança de acesso | Nenhuma | RACF, TLS no MQ, autorização DB2 |
 

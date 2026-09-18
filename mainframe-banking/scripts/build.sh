@@ -41,7 +41,6 @@ MODULES=(
     programs/common/BKVALID.cbl
     programs/common/BKRESP.cbl
     programs/common/ACCTDAO.cbl
-    programs/common/CUSTDAO.cbl
     programs/common/TRXDAO.cbl
     programs/common/ACCTPOST.cbl
     programs/account/ACCTINQ.cbl
