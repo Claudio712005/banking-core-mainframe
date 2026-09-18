@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Body>
+    <cus:GetCreditLimit xmlns:cus="http://bankcore.example/customer/v1">
+      <cus:customerId>0000000005</cus:customerId>
+    </cus:GetCreditLimit>
+  </soapenv:Body>
+</soapenv:Envelope>
