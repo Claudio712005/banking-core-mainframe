@@ -1,0 +1,48 @@
+cobc -m  programs/common/CSTVAL.cbl
+ld: warning: -undefined suppress is deprecated
+ld: warning: -undefined suppress is deprecated
+cobc -m  programs/common/CSTRESP.cbl
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: warning: larger REDEFINES used [-Wdialect]
+   49 |       *   AVAILABLE-LIMIT                    166   16                  *
+   50 |       *----------------------------------------------------------------*
+   51 >            05  CRS-CREDIT-INQUIRY REDEFINES CRS-BODY.
+   52 |                10  CRS-CR-CUSTOMER-ID       PIC X(10).
+   53 |                10  CRS-CR-CURRENCY          PIC X(03).
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: note: size of 'CRS-CREDIT-INQUIRY' larger than size of 'CRS-BODY' [-Wdialect]
+ld: warning: -undefined suppress is deprecated
+ld: warning: -undefined suppress is deprecated
+cobc -m  programs/common/CUSTDAO.cbl
+ld: warning: -undefined suppress is deprecated
+ld: warning: -undefined suppress is deprecated
+cobc -m  programs/common/CREDDAO.cbl
+ld: warning: -undefined suppress is deprecated
+ld: warning: -undefined suppress is deprecated
+cobc -m  programs/customer/CUSTINQ.cbl
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: warning: larger REDEFINES used [-Wdialect]
+   49 |       *   AVAILABLE-LIMIT                    166   16                  *
+   50 |       *----------------------------------------------------------------*
+   51 >            05  CRS-CREDIT-INQUIRY REDEFINES CRS-BODY.
+   52 |                10  CRS-CR-CUSTOMER-ID       PIC X(10).
+   53 |                10  CRS-CR-CURRENCY          PIC X(03).
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: note: size of 'CRS-CREDIT-INQUIRY' larger than size of 'CRS-BODY' [-Wdialect]
+ld: warning: -undefined suppress is deprecated
+ld: warning: -undefined suppress is deprecated
+cobc -m  programs/credit/CRDINQ.cbl
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: warning: larger REDEFINES used [-Wdialect]
+   49 |       *   AVAILABLE-LIMIT                    166   16                  *
+   50 |       *----------------------------------------------------------------*
+   51 >            05  CRS-CREDIT-INQUIRY REDEFINES CRS-BODY.
+   52 |                10  CRS-CR-CUSTOMER-ID       PIC X(10).
+   53 |                10  CRS-CR-CURRENCY          PIC X(03).
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: note: size of 'CRS-CREDIT-INQUIRY' larger than size of 'CRS-BODY' [-Wdialect]
+ld: warning: -undefined suppress is deprecated
+ld: warning: -undefined suppress is deprecated
+cobc -x  programs/driver/CUSTDRV.cbl
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: warning: larger REDEFINES used [-Wdialect]
+   49 |       *   AVAILABLE-LIMIT                    166   16                  *
+   50 |       *----------------------------------------------------------------*
+   51 >            05  CRS-CREDIT-INQUIRY REDEFINES CRS-BODY.
+   52 |                10  CRS-CR-CUSTOMER-ID       PIC X(10).
+   53 |                10  CRS-CR-CURRENCY          PIC X(03).
+/Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/copybooks/CUSTRSP.CPY:51: note: size of 'CRS-CREDIT-INQUIRY' larger than size of 'CRS-BODY' [-Wdialect]
+BUILD OK -> /Users/clauaraujo11/codes/back-end(s)/account-core-integration/mainframe-customer/build/bin
