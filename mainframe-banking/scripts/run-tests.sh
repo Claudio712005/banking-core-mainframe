@@ -37,7 +37,6 @@ run_suite() {
 
     rm -rf "$work"; mkdir -p "$work/data" "$expected"
     cp "$ROOT/data/accounts/ACCTMAST.dat"    "$work/data/ACCTMAST.dat"
-    cp "$ROOT/data/customers/CUSTMAST.dat"   "$work/data/CUSTMAST.dat"
     cp "$ROOT/data/transactions/TRXJRNL.dat" "$work/data/TRXJRNL.dat"
     [[ -n "$master_override" ]] && cp "$master_override" "$work/data/ACCTMAST.dat"
 

@@ -5,7 +5,6 @@
 ```text
  TRANSPORTE          BKBATDRV            batch: arquivo sequencial (roda no lab)
  (substituível)      BKMQLSN             online: listener MQ local (GnuCOBOL + client IBM MQ)
-                     BKMQADP             online: CICS acionado por MQ (alvo z/OS)
         │  CALL por whitelist, USING REQUEST RESPONSE
         ▼
  ENTRADA             ACCTINQ  ACCTDEP  ACCTWDR  TRXINQ
@@ -16,17 +15,17 @@
         ├──── BKVALID  (validação sintática, sem I/O)
         ├──── BKRESP   (cabeçalho, mensagens, log técnico)
         ▼                ▼            ▼           ▼
- ACESSO A DADOS      ACCTDAO      CUSTDAO      TRXDAO
+ ACESSO A DADOS      ACCTDAO                   TRXDAO
  (substituível)      └── lab: arquivos   │   futuro: DB2 (mesma interface)
 ```
 
 | Camada | Programas | Conhece | Não conhece |
 |---|---|---|---|
-| Transporte | BKBATDRV, BKMQLSN, BKMQADP | origem/destino das mensagens, RC do job, envelope MQ, unidade de trabalho | regras de negócio, persistência |
+| Transporte | BKBATDRV, BKMQLSN | origem/destino das mensagens, RC do job, envelope MQ, unidade de trabalho | regras de negócio, persistência |
 | Entrada | ACCTINQ, ACCTDEP, ACCTWDR, TRXINQ | contrato REQUEST/RESPONSE | arquivos, DB2, MQ |
 | Negócio | ACCTPOST | regras de lançamento, idempotência, unidade de trabalho | onde os dados estão |
 | Serviços comuns | BKVALID, BKRESP | formato dos campos, códigos e mensagens | regras de negócio |
-| Dados | ACCTDAO, CUSTDAO, TRXDAO | armazenamento físico | regras de negócio |
+| Dados | ACCTDAO, TRXDAO | armazenamento físico | regras de negócio |
 
 Toda dependência aponta para baixo. Trocar a camada de transporte (arquivo → MQ/CICS) ou a de
 dados (arquivo → DB2) **não altera** as camadas do meio, porque as interfaces
@@ -50,8 +49,8 @@ dados (arquivo → DB2) **não altera** as camadas do meio, porque as interfaces
 | D12 | Log técnico só com programa, códigos e correlation-id | Nenhum dado bancário ou pessoal em SYSOUT. |
 | D13 | Sem `GO TO`; parágrafos numerados por fase (1000 init, 2000 validação … 9000 finalização) | Fluxo estruturado, com leitura de cima para baixo. |
 | D14 | `INITIALIZE ... WITH FILLER` nos registros | FILLER não inicializado pode conter low-values. Isso vira lixo em arquivo (no GnuCOBOL, file status 71) ou em mensagem MQ. |
-| D15 | Canal MQ com **uma fila por operação**. Um único adaptador (`BKMQADP`) roda sob quatro TRANSIDs e lê a operação atendida do `USERDATA` do PROCESS | Com uma fila única, o CKTI acionaria sempre a mesma transação, sem separar depósito de saque. Com filas separadas, o RACF controla a gravação em cada fila e cada TRANSID. O adaptador rejeita mensagem de outra operação. |
-| D16 | O adaptador chama os programas de entrada com `CALL`, não com `EXEC CICS LINK` | Mantém a interface de dois parâmetros (`REQUEST`, `RESPONSE`), que o `LINK` não aceita (uma única COMMAREA). Os programas rodam na mesma tarefa e na mesma unidade de trabalho, e continuam sem nenhum comando CICS. |
+| D15 | Canal MQ com **uma fila por operação**; o adaptador rejeita mensagem cuja operação não seja a da fila | Permite controlar por fila quem pode depositar e quem pode sacar. Uma fila única não separaria as operações. |
+| D16 | O adaptador chama os programas de entrada com `CALL` | Mantém a interface de dois parâmetros (`REQUEST`, `RESPONSE`) e os programas livres de qualquer comando de transporte. |
 | D17 | Canal MQ: `3xxx`/`9xxx` fazem rollback sem resposta, e o limite de tentativas vem do backout (`BOTHRESH`) | A resposta só sai se os dados forem confirmados. Falhas transitórias são repetidas pelo próprio MQ, e poison messages terminam na fila de backout com resposta `9004`. |
 
 ## 3. Fluxo de um lançamento (ACCTPOST)
@@ -128,20 +127,17 @@ mainframe-banking/
 │   ├── account/        ACCTINQ ACCTDEP ACCTWDR       (entrada)
 │   ├── transaction/    TRXINQ                        (entrada)
 │   ├── common/         ACCTPOST BKVALID BKRESP       (negócio / serviços)
-│   │                   ACCTDAO CUSTDAO TRXDAO        (dados - LAB)
+│   │                   ACCTDAO TRXDAO                (dados - LAB)
 │   ├── driver/         BKBATDRV                      (transporte batch)
-│   └── adapter/        BKMQADP                       (transporte MQ/CICS - z/OS)
-│                       BKMQLSN BKMQREQ               (transporte MQ local e ferramenta de teste)
+│   └── adapter/        BKMQLSN BKMQREQ               (transporte MQ local e ferramenta de teste)
 ├── copybooks/          REQUEST RESPONSE RSPCODE      (contrato)
 │                       ACCOUNT CUSTOMER TRANSACT     (entidades)
 │                       DAOCTL VALCTL RSPCTL PSTCTL   (interfaces internas)
-├── jcl/compile/        BKCBLCL (PROC) BKCOMPL BKBUILD
-├── jcl/batch/          BKDEFGDG BKRUN BKDAILY
+├── jcl/compile/        BKCBLCL (PROC) BKBUILD
 ├── data/               massa base (nunca alterada pelos scripts)
 ├── tests/              requisições, massa corrompida, respostas esperadas
 ├── scripts/            build.sh run.sh run-tests.sh
-└── docs/               CONTRACT.md ARCHITECTURE.md ZOS-MIGRATION.md
-                        MQ-INTEGRATION.md
+└── docs/               CONTRACT.md ARCHITECTURE.md ZOS-TARGET.md
 ```
 
 Desvios em relação à estrutura original proposta:

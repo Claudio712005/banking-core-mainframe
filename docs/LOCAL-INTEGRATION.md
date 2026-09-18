@@ -21,12 +21,13 @@ Alternativas avaliadas:
 | Alternativa | Por que não |
 |---|---|
 | Ponte em Java lendo a fila e executando `BKBATDRV` por mensagem | Coloca Java onde deveria haver COBOL. Não exercita a API do MQ nem o tratamento de mensagens do lado mainframe. |
-| Rodar o `BKMQADP` (CICS) | Não existe CICS local. Simulá-lo seria um "fake mainframe". |
+| Um programa CICS | Não existe CICS local. Simulá-lo seria um "fake mainframe". |
 | Fila única para todas as operações | Perde a segurança por operação (RACF por fila) definida no desenho z/OS. |
 | GnuCOBOL do Ubuntu (3.1.2) | Diverge da versão 3.2 usada nos testes: trata linhas longas de forma diferente. |
 
-O `BKMQLSN` segue as mesmas regras do `BKMQADP` (CICS). A diferença é que usa
-`MQCONNX`/`MQCMIT`/`MQBACK` e log em stdout no lugar de `RETRIEVE`/`SYNCPOINT`/`WRITEQ TD`.
+O `BKMQLSN` segue as regras de tratamento de mensagem descritas em
+[ZOS-TARGET.md](../mainframe-banking/docs/ZOS-TARGET.md), com `MQCONNX`/`MQCMIT`/`MQBACK` e log em
+stdout no lugar dos comandos CICS.
 
 ## Como foi validado
 

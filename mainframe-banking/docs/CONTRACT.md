@@ -181,7 +181,7 @@ O primeiro dígito indica a categoria e define como o cliente deve reagir.
 - `9003` só existe no laboratório (arquivo local).
 - A mensagem precisa ter `Format = MQSTR` (sem cabeçalho RFH2 do JMS) e exatamente 200 bytes;
   caso contrário, a resposta é `1001`.
-- Detalhes em [MQ-INTEGRATION.md](MQ-INTEGRATION.md).
+- Detalhes em [ZOS-TARGET.md](ZOS-TARGET.md) e em [../../docs/LOCAL-INTEGRATION.md](../../docs/LOCAL-INTEGRATION.md).
 
 ### Uso correto da idempotency key
 

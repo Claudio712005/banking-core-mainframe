@@ -13,8 +13,8 @@
       *   2000 VALIDATE-INPUT        LAYOUT, OPERATION, FIELDS         *
       *   3000 CHECK-IDEMPOTENCY     SAME KEY + SAME PAYLOAD -> 0001   *
       *                              SAME KEY + OTHER PAYLOAD -> 2007  *
-      *   4000 LOAD-ACCOUNT          EXISTS, ACTIVE, SAME CURRENCY     *
-      *   4500 VERIFY-CUSTOMER       CUSTOMER ACTIVE                   *
+      *   4000 LOAD-ACCOUNT          EXISTS, ACTIVE, SAME CURRENCY,    *
+      *                              CUSTOMER ACTIVE                   *
       *   5000 APPLY-BUSINESS-RULE   NEW BALANCE, FUNDS, LIMITS        *
       *   6000 PERSIST-POSTING       UPDATE ACCOUNT + INSERT JOURNAL   *
       *   8000 BUILD-RESPONSE                                          *
@@ -39,7 +39,6 @@
            05  WS-PGM-VALIDATOR             PIC X(08) VALUE 'BKVALID'.
            05  WS-PGM-RESPONSE-BUILDER      PIC X(08) VALUE 'BKRESP'.
            05  WS-PGM-ACCOUNT-DAO           PIC X(08) VALUE 'ACCTDAO'.
-           05  WS-PGM-CUSTOMER-DAO          PIC X(08) VALUE 'CUSTDAO'.
            05  WS-PGM-TRANSACTION-DAO       PIC X(08) VALUE 'TRXDAO'.
 
        01  WS-CONSTANTS.
@@ -66,9 +65,6 @@
       *    ACCOUNT IMAGE BEFORE POSTING (LAB COMPENSATION ONLY)
        01  WS-ACCOUNT-BEFORE.
            COPY ACCOUNT REPLACING ==:TAG:== BY ==BFR==.
-
-       01  WS-CUSTOMER.
-           COPY CUSTOMER REPLACING ==:TAG:== BY ==CUS==.
 
       *    NEW POSTING, OR THE ORIGINAL ONE WHEN A REQUEST IS REPLAYED
        01  WS-TRANSACTION.
@@ -116,9 +112,6 @@
                PERFORM 4000-LOAD-ACCOUNT
            END-IF
            IF WS-RC-SUCCESS
-               PERFORM 4500-VERIFY-CUSTOMER
-           END-IF
-           IF WS-RC-SUCCESS
                PERFORM 5000-APPLY-BUSINESS-RULE
            END-IF
            IF WS-RC-SUCCESS
@@ -137,7 +130,6 @@
                       WS-DAO-CONTROL
                       WS-ACCOUNT
                       WS-ACCOUNT-BEFORE
-                      WS-CUSTOMER
                       WS-TRANSACTION
                       WS-MONETARY-WORK
                       WITH FILLER
@@ -265,29 +257,12 @@
            EVALUATE TRUE
                WHEN NOT ACC-STATUS-ACTIVE
                    SET WS-RC-ACCOUNT-NOT-ACTIVE TO TRUE
+               WHEN NOT ACC-CUSTOMER-ACTIVE
+                   SET WS-RC-CUSTOMER-NOT-ACTIVE TO TRUE
                WHEN ACC-CURRENCY NOT = REQ-PO-CURRENCY
                    SET WS-RC-CURRENCY-MISMATCH TO TRUE
                WHEN OTHER
                    MOVE WS-ACCOUNT TO WS-ACCOUNT-BEFORE
-           END-EVALUATE
-           .
-
-      *    AN ACCOUNT WITHOUT CUSTOMER IS CORRUPT DATA: FAIL SAFE.
-       4500-VERIFY-CUSTOMER.
-           MOVE ACC-CUSTOMER-ID TO CUS-CUSTOMER-ID
-           INITIALIZE WS-DAO-CONTROL
-           SET DAO-FN-READ TO TRUE
-           PERFORM 7200-CALL-CUSTOMER-DAO
-           EVALUATE TRUE
-               WHEN DAO-ST-OK
-                   IF NOT CUS-STATUS-ACTIVE
-                       SET WS-RC-CUSTOMER-NOT-ACTIVE TO TRUE
-                   END-IF
-               WHEN DAO-ST-NOT-FOUND
-                   SET WS-RC-DATA-INTEGRITY-ERROR TO TRUE
-                   MOVE DAO-STATUS TO WS-TECH-CODE
-               WHEN OTHER
-                   PERFORM 7900-HANDLE-DAO-FAILURE
            END-EVALUATE
            .
 
@@ -406,14 +381,6 @@
        7100-CALL-ACCOUNT-DAO.
            CALL WS-PGM-ACCOUNT-DAO USING WS-DAO-CONTROL
                                          WS-ACCOUNT
-               ON EXCEPTION
-                   PERFORM 7800-SET-MODULE-MISSING
-           END-CALL
-           .
-
-       7200-CALL-CUSTOMER-DAO.
-           CALL WS-PGM-CUSTOMER-DAO USING WS-DAO-CONTROL
-                                          WS-CUSTOMER
                ON EXCEPTION
                    PERFORM 7800-SET-MODULE-MISSING
            END-CALL

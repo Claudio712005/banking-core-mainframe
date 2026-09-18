@@ -94,5 +94,5 @@ Usa `tests/data/ACCTMAST-CORRUPT.dat` (saldo não numérico na conta 1000000003)
 | Journal inexistente | Tratado como vazio: TRXINQ → 2005; o primeiro lançamento cria o arquivo com ID 1 |
 | Arquivo de requisições vazio | RC 0, contadores zerados |
 | `DD_ACCTWORK` ausente | Depósito → 9001 (`TECH=NOPATH`), master intacto, RC 12 |
-| Módulo `CUSTDAO` ausente | Depósito → 9001 (`TECH=NOMODULE`), RC 12 |
+| Módulo `ACCTDAO` ausente | Depósito → 9001 (`TECH=NOMODULE`), RC 12 |
 | Falha na gravação do journal depois do update da conta | Compensação restaurou o saldo (versão +2), resposta 9001 |

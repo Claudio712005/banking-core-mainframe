@@ -44,7 +44,6 @@ RESPONSE_FILE="$2"
 mkdir -p "$DATA_DIR"
 if $RESET || [[ ! -f "$DATA_DIR/ACCTMAST.dat" ]]; then
     cp "$ROOT/data/accounts/ACCTMAST.dat"     "$DATA_DIR/ACCTMAST.dat"
-    cp "$ROOT/data/customers/CUSTMAST.dat"    "$DATA_DIR/CUSTMAST.dat"
     cp "$ROOT/data/transactions/TRXJRNL.dat"  "$DATA_DIR/TRXJRNL.dat"
 fi
 mkdir -p "$(dirname "$RESPONSE_FILE")"
@@ -60,7 +59,6 @@ export COB_LS_SPLIT=FALSE
 # the rename that commits an update is atomic.
 export DD_ACCTMAST="$DATA_DIR/ACCTMAST.dat"
 export DD_ACCTWORK="$DATA_DIR/ACCTMAST.new"
-export DD_CUSTMAST="$DATA_DIR/CUSTMAST.dat"
 export DD_TRXJRNL="$DATA_DIR/TRXJRNL.dat"
 export DD_REQIN="$REQUEST_FILE"
 export DD_RSPOUT="$RESPONSE_FILE"
