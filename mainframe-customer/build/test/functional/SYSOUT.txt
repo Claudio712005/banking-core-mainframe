@@ -1,6 +1,0 @@
-CUSTDRV  ---- PROCESSING SUMMARY ----
-CUSTDRV  REQUESTS READ .......:          16
-CUSTDRV  COMPLETED ...........:           5
-CUSTDRV  REJECTED ............:          11
-CUSTDRV  TECHNICAL FAILURES ..:           0
-CUSTDRV  RETURN CODE .........: +00004
