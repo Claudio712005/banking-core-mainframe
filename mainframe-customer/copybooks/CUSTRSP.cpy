@@ -57,4 +57,4 @@
                                             SIGN LEADING SEPARATE.
                10  CRS-CR-AVAILABLE-LIMIT   PIC S9(13)V99
                                             SIGN LEADING SEPARATE.
-               10  FILLER                   PIC X(135).
+               10  FILLER                   PIC X(119).
