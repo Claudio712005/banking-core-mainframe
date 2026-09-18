@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="CustomerService"
+             targetNamespace="http://bankcore.example/customer/v1"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://bankcore.example/customer/v1"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <documentation>
+    Customer master and credit limit of the legacy core (COBOL).
+    Read-only operations. Every value is derived from the mainframe records;
+    the national identifier is always returned masked.
+  </documentation>
+
+  <types>
+    <xsd:schema targetNamespace="http://bankcore.example/customer/v1"
+                elementFormDefault="qualified">
+
+      <xsd:simpleType name="CustomerId">
+        <xsd:annotation>
+          <xsd:documentation>
+            Exactly ten digits; leading zeros are significant.
+          </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+          <xsd:pattern value="[0-9]{10}"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+
+      <xsd:simpleType name="CustomerStatus">
+        <xsd:annotation>
+          <xsd:documentation>A active, B blocked, I inactive.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+          <xsd:enumeration value="A"/>
+          <xsd:enumeration value="B"/>
+          <xsd:enumeration value="I"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+
+      <xsd:simpleType name="Amount">
+        <xsd:annotation>
+          <xsd:documentation>
+            Monetary value with exactly two decimal places, never negative.
+          </xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:decimal">
+          <xsd:fractionDigits value="2"/>
+          <xsd:totalDigits value="15"/>
+          <xsd:minInclusive value="0"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+
+      <xsd:element name="GetCustomer">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="customerId" type="tns:CustomerId"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetCustomerResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="customerId" type="tns:CustomerId"/>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="status" type="tns:CustomerStatus"/>
+            <xsd:element name="documentMasked" type="xsd:string"/>
+            <xsd:element name="registeredDate" type="xsd:date"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetCreditLimit">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="customerId" type="tns:CustomerId"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="GetCreditLimitResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="customerId" type="tns:CustomerId"/>
+            <xsd:element name="currency" type="xsd:string"/>
+            <xsd:element name="approvedLimit" type="tns:Amount"/>
+            <xsd:element name="usedLimit" type="tns:Amount"/>
+            <xsd:element name="availableLimit" type="tns:Amount"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="error">
+        <xsd:annotation>
+          <xsd:documentation>
+            Fault detail. code: 1001 invalid request, 1002 invalid customer id,
+            2001 customer not found, 2002 customer not active,
+            2003 customer has no credit line, 9001/9002/9999 technical failure.
+            Client faults carry 1xxx and 2xxx; server faults carry 9xxx.
+          </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="code" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+    </xsd:schema>
+  </types>
+
+  <message name="GetCustomerRequest">
+    <part name="parameters" element="tns:GetCustomer"/>
+  </message>
+  <message name="GetCustomerResponse">
+    <part name="parameters" element="tns:GetCustomerResponse"/>
+  </message>
+  <message name="GetCreditLimitRequest">
+    <part name="parameters" element="tns:GetCreditLimit"/>
+  </message>
+  <message name="GetCreditLimitResponse">
+    <part name="parameters" element="tns:GetCreditLimitResponse"/>
+  </message>
+  <message name="ServiceFault">
+    <part name="detail" element="tns:error"/>
+  </message>
+
+  <portType name="CustomerPortType">
+    <operation name="GetCustomer">
+      <input message="tns:GetCustomerRequest"/>
+      <output message="tns:GetCustomerResponse"/>
+      <fault name="ServiceFault" message="tns:ServiceFault"/>
+    </operation>
+    <operation name="GetCreditLimit">
+      <input message="tns:GetCreditLimitRequest"/>
+      <output message="tns:GetCreditLimitResponse"/>
+      <fault name="ServiceFault" message="tns:ServiceFault"/>
+    </operation>
+  </portType>
+
+  <binding name="CustomerBinding" type="tns:CustomerPortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="GetCustomer">
+      <soap:operation soapAction="GetCustomer" style="document"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ServiceFault"><soap:fault name="ServiceFault" use="literal"/></fault>
+    </operation>
+    <operation name="GetCreditLimit">
+      <soap:operation soapAction="GetCreditLimit" style="document"/>
+      <input><soap:body use="literal"/></input>
+      <output><soap:body use="literal"/></output>
+      <fault name="ServiceFault"><soap:fault name="ServiceFault" use="literal"/></fault>
+    </operation>
+  </binding>
+
+  <service name="CustomerService">
+    <documentation>
+      The SOAPAction header selects the operation and is mandatory.
+    </documentation>
+    <port name="CustomerPort" binding="tns:CustomerBinding">
+      <soap:address location="http://localhost:8081/customer-service"/>
+    </port>
+  </service>
+
+</definitions>
